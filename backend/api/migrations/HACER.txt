@@ -1,0 +1,102 @@
+Para aplicar el sistema de permisos granulares a cualquier ViewSet, solo necesitas seguir estos tres pasos:
+
+Paso 1: Asegúrate de que el Permiso Exista
+Ve a tu archivo de migración api/migrations/0002_poblar_permisos.py. Antes de proteger una acción, su permiso debe estar definido en la lista PERMISOS.
+
+Por ejemplo, si quieres controlar quién puede crear un Proveedor, primero debes asegurarte de que un permiso como 'gestionar_proveedores' o 'crear_proveedor' esté en esa lista.
+
+Paso 2: Aplica la Clase de Permiso
+En api/views.py, en el ViewSet que quieres proteger, añade estas dos líneas:
+
+Importa la clase al inicio del archivo: from .permissions import TienePermisoRequerido
+
+Añade la propiedad a la clase del ViewSet: permission_classes = [TienePermisoRequerido]
+
+Paso 3: Define el "Mapa de Permisos"
+Dentro del mismo ViewSet, crea un diccionario llamado permiso_requerido_map. Este mapa le dice a nuestra clase TienePermisoRequerido qué permiso de la base de datos debe buscar para cada acción (create, update, destroy).
+
+La clave es el nombre de la acción.
+
+El valor es el string del permiso (del Paso 1).
+
+¡Y eso es todo! Nuestra lógica se encarga del resto.
+
+
+
+Ejemplos Prácticos
+Aquí tienes cómo se aplicaría el patrón a diferentes ViewSets en tu archivo api/views.py.
+
+Ejemplo 1: ActivoFijoViewSet
+Supongamos que en tu migración tienes los permisos 'crear_activo', 'editar_activo' y 'eliminar_activo'.
+
+
+
+# api/views.py
+
+# ... (importaciones) ...
+from .permissions import TienePermisoRequerido
+
+# ...
+
+class ActivoFijoViewSet(viewsets.ModelViewSet):
+    queryset = ActivoFijo.objects.all()
+    serializer_class = ActivoFijoSerializer
+    # Paso 2: Aplicar la clase de permiso
+    permission_classes = [TienePermisoRequerido]
+    
+    # Paso 3: Definir el mapa de permisos
+    permiso_requerido_map = {
+        'create': 'crear_activo',
+        'update': 'editar_activo',
+        'partial_update': 'editar_activo', # partial_update también es una forma de editar
+        'destroy': 'eliminar_activo',
+    }
+
+
+
+
+Ejemplo 2: PresupuestoViewSet
+Imagina que un presupuesto no se "edita", sino que se "aprueba". Y solo un rol muy específico puede crearlos.
+
+# api/views.py
+
+# ...
+
+class PresupuestoViewSet(viewsets.ModelViewSet):
+    queryset = Presupuesto.objects.all()
+    serializer_class = PresupuestoSerializer
+    # Paso 2: Aplicar la clase de permiso
+    permission_classes = [TienePermisoRequerido]
+
+    # Paso 3: Definir el mapa de permisos con lógica de negocio
+    permiso_requerido_map = {
+        'create': 'crear_presupuesto',
+        'update': 'aprobar_presupuesto', # El permiso para editar es 'aprobar'
+        'partial_update': 'aprobar_presupuesto',
+        'destroy': 'eliminar_presupuesto',
+    }
+
+
+
+
+Ejemplo 3: Un ViewSet de "Solo Lectura" (Ej: EstadoViewSet)
+Hay modelos que casi nunca cambian (como los estados: "Nuevo", "En Mantenimiento", "De Baja"). Quizás solo el superusuario deba poder modificarlos, pero todos los empleados autenticados pueden verlos. En este caso, no necesitas el mapa, solo el permiso de estar autenticado.
+
+
+# api/views.py
+
+from rest_framework.permissions import IsAuthenticated # Importa IsAuthenticated
+
+# ...
+
+class EstadoViewSet(viewsets.ModelViewSet):
+    queryset = Estado.objects.all()
+    serializer_class = EstadoSerializer
+    # Solo se requiere estar logueado. Las acciones de escritura serán denegadas
+    # por nuestra clase personalizada, o puedes ser más explícito así:
+    permission_classes = [IsAuthenticated]
+
+
+Al usar IsAuthenticated, cualquier usuario logueado puede hacer peticiones GET (leer), pero las peticiones POST, PUT o DELETE serán denegadas por defecto a menos que el usuario sea un staff (administrador de Django).
+
+Ahora tienes el conocimiento completo para aplicar la seguridad a cada rincón de tu API. Simplemente decide qué acciones quieres controlar para cada modelo, asegúrate de que el permiso exista en la migración, y luego aplica el patrón de 2 líneas (permission_classes y permiso_requerido_map) en el ViewSet correspondiente.
