@@ -1,8 +1,15 @@
 
-
+from decouple import config, Config, RepositoryEnv
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+DOTENV_PATH  = BASE_DIR / '.env'
+
+if DOTENV_PATH.exists():
+    config = Config(RepositoryEnv(str(DOTENV_PATH)))
+else:
+    print("Advertencia: No se encontró el archivo .env en la raíz del backend.")
 
 SECRET_KEY = 'django-insecure-j=c8a+!#g0f%owt8)*opd-$ybx9gmi&z-htars8c+ga-^45*$k'
 
@@ -57,11 +64,11 @@ WSGI_APPLICATION = 'ActFijoPresupuesto.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ActFijoPresupuesto', 
-        'USER': 'postgres',     
-        'PASSWORD': '12345', 
-        'HOST': 'localhost',              
-        'PORT': '5432', 
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'), 
+        'PORT': config('DB_PORT', default='5432'),
     }
 }
 
