@@ -15,7 +15,8 @@ from .serializers import (
     InventarioSerializer, MovimientosInventarioSerializer, PresupuestoSerializer,
     DetallePresupuestoSerializer, ContratosProveedoresSerializer, AuditoriaSerializer,
     ReporteSerializer, RevalorizacionActivosSerializer, TipoDepreciacionSerializer,
-    DepreciacionActivosSerializer, DisposicionActivosSerializer, ImpuestosSerializer
+    DepreciacionActivosSerializer, DisposicionActivosSerializer, ImpuestosSerializer,
+	EmpleadoReadSerializer, EmpleadoWriteSerializer
 )
 
 class EmpresaViewSet(viewsets.ModelViewSet):
@@ -58,7 +59,7 @@ class ProveedorViewSet(viewsets.ModelViewSet):
     serializer_class = ProveedorSerializer
 
 class EmpleadoViewSet(viewsets.ModelViewSet):
-    serializer_class = EmpleadoSerializer
+    # Ya no definimos un serializer_class estático aquí
     permission_classes = [TienePermisoRequerido]
     permiso_requerido_map = {
         'create': 'crear_empleado',
@@ -66,6 +67,15 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
         'partial_update': 'editar_empleado',
         'destroy': 'eliminar_empleado',
     }
+
+    def get_serializer_class(self):
+        """
+        Determina qué serializer usar basado en la acción (lectura o escritura).
+        """
+        if self.action in ['create', 'update', 'partial_update']:
+            return EmpleadoWriteSerializer
+        return EmpleadoReadSerializer # Usado para 'list' y 'retrieve'
+
     def get_queryset(self):
         queryset = Empleado.objects.all()
         termino_busqueda = self.request.query_params.get('buscar', None)
@@ -77,6 +87,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 Q(apellido_m__icontains=termino_busqueda)
             )
         return queryset
+
 
 class EstadoViewSet(viewsets.ModelViewSet):
     queryset = Estado.objects.all()
