@@ -87,7 +87,8 @@ class Proveedor(models.Model):
     direccion = models.CharField(max_length=255, verbose_name="Dirección", blank=True, null=True)
     email = models.EmailField(verbose_name="Email", blank=True, null=True)
     pais = models.CharField(max_length=50, verbose_name="País", blank=True, null=True)
-
+    estado = models.CharField(max_length=10, default='activo', verbose_name="Estado")
+    
     class Meta:
         verbose_name = "Proveedor"
         verbose_name_plural = "Proveedores"

@@ -1,6 +1,12 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from django.db import transaction
 from django.db.models import Q
+
 from .permissions import TienePermisoRequerido
+
 from .models import (
     Empresa, Departamento, Permisos, Roles, Cargo, Empleado, Proveedor,
     Estado, CategoriaActivo, Ubicacion, ActivoFijo, Inventario,
@@ -8,6 +14,7 @@ from .models import (
     ContratosProveedores, Auditoria, Reporte, RevalorizacionActivos,
     TipoDepreciacion, DepreciacionActivos, Divisas, DisposicionActivos, Impuestos
 )
+
 from .serializers import (
     EmpresaSerializer, DepartamentoSerializer, PermisosSerializer, RolesSerializer,
     CargoSerializer, EmpleadoSerializer, ProveedorSerializer, DivisasSerializer,
@@ -16,7 +23,10 @@ from .serializers import (
     DetallePresupuestoSerializer, ContratosProveedoresSerializer, AuditoriaSerializer,
     ReporteSerializer, RevalorizacionActivosSerializer, TipoDepreciacionSerializer,
     DepreciacionActivosSerializer, DisposicionActivosSerializer, ImpuestosSerializer,
-	EmpleadoReadSerializer, EmpleadoWriteSerializer
+	EmpleadoReadSerializer, EmpleadoWriteSerializer,
+    ActivoFijoReadSerializer, ActivoFijoWriteSerializer,
+    DetallePresupuestoReadSerializer, DetallePresupuestoWriteSerializer,
+    RevalorizacionActivosReadSerializer, RevalorizacionActivosWriteSerializer,
 )
 
 class EmpresaViewSet(viewsets.ModelViewSet):
@@ -55,11 +65,50 @@ class DivisasViewSet(viewsets.ModelViewSet):
     serializer_class = DivisasSerializer
 
 class ProveedorViewSet(viewsets.ModelViewSet):
-    queryset = Proveedor.objects.all()
     serializer_class = ProveedorSerializer
+    queryset = Proveedor.objects.all()
+
+    def get_queryset(self):
+        """
+        Filtra para mostrar solo los proveedores activos en la lista principal.
+        """
+        return Proveedor.objects.filter(estado='activo')
+
+    def perform_destroy(self, instance):
+        """
+        En lugar de borrar el objeto de la base de datos,
+        simplemente cambia su estado a 'inactivo'.
+        """
+        instance.estado = 'inactivo'
+        instance.save()
+
+    # --- ACCIÓN NUEVA: LISTAR INACTIVOS ---
+    @action(detail=False, methods=['get'])
+    def inactivos(self, request):
+        """
+        Devuelve una lista de todos los proveedores con estado 'inactivo'.
+        Se accede a través de la URL: /api/proveedores/inactivos/
+        """
+        proveedores_inactivos = Proveedor.objects.filter(estado='inactivo')
+        serializer = self.get_serializer(proveedores_inactivos, many=True)
+        return Response(serializer.data)
+
+    # --- ACCIÓN NUEVA: REACTIVAR ---
+    @action(detail=True, methods=['post'])
+    def reactivar(self, request, pk=None):
+        """
+        Cambia el estado de un proveedor específico de 'inactivo' a 'activo'.
+        Se accede a través de la URL: /api/proveedores/{id}/reactivar/
+        """
+        proveedor = self.get_object()
+        if proveedor.estado == 'inactivo':
+            proveedor.estado = 'activo'
+            proveedor.save()
+            return Response({'status': 'proveedor reactivado'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'status': 'el proveedor ya estaba activo'}, status=status.HTTP_400_BAD_REQUEST)
 
 class EmpleadoViewSet(viewsets.ModelViewSet):
-    # Ya no definimos un serializer_class estático aquí
     permission_classes = [TienePermisoRequerido]
     permiso_requerido_map = {
         'create': 'crear_empleado',
@@ -74,7 +123,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
         """
         if self.action in ['create', 'update', 'partial_update']:
             return EmpleadoWriteSerializer
-        return EmpleadoReadSerializer # Usado para 'list' y 'retrieve'
+        return EmpleadoReadSerializer
 
     def get_queryset(self):
         queryset = Empleado.objects.all()
@@ -87,7 +136,6 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 Q(apellido_m__icontains=termino_busqueda)
             )
         return queryset
-
 
 class EstadoViewSet(viewsets.ModelViewSet):
     queryset = Estado.objects.all()
@@ -102,8 +150,33 @@ class UbicacionViewSet(viewsets.ModelViewSet):
     serializer_class = UbicacionSerializer
 
 class ActivoFijoViewSet(viewsets.ModelViewSet):
-    queryset = ActivoFijo.objects.all()
-    serializer_class = ActivoFijoSerializer
+    """
+    Gestiona los Activos Fijos del sistema.
+    Utiliza serializers y querysets dinámicos para máxima flexibilidad.
+    """
+    # (Si tienes alguna clase de permisos aquí, déjala como está)
+    # permission_classes = [IsAuthenticated, ...]
+
+    def get_queryset(self):
+        """
+        Define dinámicamente el conjunto de datos que el ViewSet manejará.
+        Este método es más flexible y permite añadir lógica de filtrado en el futuro.
+        """
+        return ActivoFijo.objects.all()
+
+    def get_serializer_class(self):
+        """
+        Este método es la clave. Determina qué serializer usar
+        basado en la acción que se está realizando (GET, POST, PUT).
+        """
+        # Si la acción es crear, actualizar o actualizar parcialmente...
+        if self.action in ['create', 'update', 'partial_update']:
+            # ...usa el serializer diseñado para escribir (que acepta IDs).
+            return ActivoFijoWriteSerializer
+        
+        # Para cualquier otra acción (como 'list' o 'retrieve')...
+        # ...usa el serializer diseñado para leer (que muestra los detalles con depth=1).
+        return ActivoFijoReadSerializer
 
 class InventarioViewSet(viewsets.ModelViewSet):
     queryset = Inventario.objects.all()
@@ -114,12 +187,19 @@ class MovimientosInventarioViewSet(viewsets.ModelViewSet):
     serializer_class = MovimientosInventarioSerializer
 
 class PresupuestoViewSet(viewsets.ModelViewSet):
+    """
+    Gestiona los Presupuestos. Usa un serializer que anida los detalles.
+    """
     queryset = Presupuesto.objects.all()
     serializer_class = PresupuestoSerializer
 
 class DetallePresupuestoViewSet(viewsets.ModelViewSet):
     queryset = DetallePresupuesto.objects.all()
-    serializer_class = DetallePresupuestoSerializer
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return DetallePresupuestoWriteSerializer
+        return DetallePresupuestoReadSerializer
 
 class ContratosProveedoresViewSet(viewsets.ModelViewSet):
     queryset = ContratosProveedores.objects.all()
@@ -134,8 +214,44 @@ class ReporteViewSet(viewsets.ModelViewSet):
     serializer_class = ReporteSerializer
 
 class RevalorizacionActivosViewSet(viewsets.ModelViewSet):
+    """
+    Gestiona las revalorizaciones y actualiza el activo correspondiente en una transacción.
+    """
     queryset = RevalorizacionActivos.objects.all()
-    serializer_class = RevalorizacionActivosSerializer
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return RevalorizacionActivosWriteSerializer
+        return RevalorizacionActivosReadSerializer
+
+    def perform_create(self, serializer):
+        """
+        Sobrescribe el método de creación para realizar una transacción atómica:
+        1. Guarda el registro de la revalorización.
+        2. Actualiza el valor_actual del ActivoFijo asociado.
+        """
+        try:
+            with transaction.atomic():
+                # Primero, guardamos el registro histórico de la revalorización
+                revalorizacion = serializer.save()
+
+                # Obtenemos el activo fijo relacionado
+                activo = revalorizacion.activo_fijo
+
+                # Actualizamos el valor del activo con el nuevo valor del registro de revalorización
+                activo.valor_actual = revalorizacion.nuevo_valor
+                
+                # ¡Esta es la línea clave que guarda el cambio en el ActivoFijo!
+                activo.save()
+
+                # (Opcional) Puedes añadir un print para verificar en la consola de Django
+                print(f"Activo '{activo.nombre}' (ID: {activo.id}) actualizado. Nuevo valor: {activo.valor_actual}")
+
+        except Exception as e:
+            # Si algo falla, la transacción se revierte y nada se guarda.
+            print(f"Error en la transacción de revalorización: {e}")
+            # Esto ayudará a levantar un error más claro si algo sale mal.
+            raise
 
 class TipoDepreciacionViewSet(viewsets.ModelViewSet):
     queryset = TipoDepreciacion.objects.all()

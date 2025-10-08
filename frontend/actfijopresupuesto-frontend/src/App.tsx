@@ -9,6 +9,12 @@ import GestionDepartamentos from './paginas/GestionDepartamentos';
 import GestionCargos from './paginas/GestionCargos'; 
 import GestionEmpleados from './paginas/GestionEmpleados';
 import GestionRoles from './paginas/GestionRoles';
+import GestionProveedores from './paginas/GestionProveedores'; 
+import GestionCategoriasActivos from './paginas/GestionCategoriasActivos';
+import GestionActivosFijos from './paginas/GestionActivosFijos';
+import GestionPresupuestos from './paginas/GestionPresupuestos';
+import GestionUbicaciones from './paginas/GestionUbicaciones';
+
 
 function App() {
   return (
@@ -25,6 +31,12 @@ function App() {
           <Route path="/departamentos" element={<GestionDepartamentos />} />
           <Route path="/cargos" element={<GestionCargos />} />
           <Route path="/empleados" element={<GestionEmpleados />} />
+          <Route path="/proveedores" element={<GestionProveedores />} />
+          <Route path="/categorias-activos" element={<GestionCategoriasActivos />} />
+          <Route path="/activos-fijos" element={<GestionActivosFijos />} />
+          <Route path="/presupuestos" element={<GestionPresupuestos />} />
+          <Route path="/ubicaciones" element={<GestionUbicaciones />} />
+
           <Route path="/roles" element={<GestionRoles />} />
         </Route>
       </Route>

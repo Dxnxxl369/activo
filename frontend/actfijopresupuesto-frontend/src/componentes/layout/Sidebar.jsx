@@ -9,6 +9,12 @@ const navLinks = [
   { nombre: 'Empleados', ruta: '/empleados' },
   { nombre: 'Departamentos', ruta: '/departamentos' },
   { nombre: 'Cargos', ruta: '/cargos' },
+  { nombre: 'Proveedores', ruta: '/proveedores' },
+  { nombre: 'Categorías de Activos', ruta: '/categorias-activos' },
+  { nombre: 'Activos Fijos', ruta: '/activos-fijos' },
+  { nombre: 'Presupuestos', ruta: '/presupuestos' },
+  { nombre: 'Ubicaciones', ruta: '/ubicaciones' },
+  
   { nombre: 'Roles y Permisos', ruta: '/roles' },
 ];
 

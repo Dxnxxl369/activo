@@ -162,7 +162,48 @@ class EmpleadoReadSerializer(serializers.ModelSerializer):
         fields = '__all__'
         depth = 1 # depth = 1 es perfecto para la lectura
 
+class ActivoFijoWriteSerializer(serializers.ModelSerializer):
+    empresa = serializers.PrimaryKeyRelatedField(queryset=Empresa.objects.all())
+    estado = serializers.PrimaryKeyRelatedField(queryset=Estado.objects.all())
+    categoria = serializers.PrimaryKeyRelatedField(queryset=CategoriaActivo.objects.all())
+    ubicacion = serializers.PrimaryKeyRelatedField(queryset=Ubicacion.objects.all())
+    class Meta:
+        model = ActivoFijo
+        fields = ['id', 'nombre', 'codigo_interno', 'fecha_adquisicion', 'valor_actual', 'vida_util', 'empresa', 'estado', 'categoria', 'ubicacion']
 
+class ActivoFijoReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActivoFijo # <- Asegúrate que el modelo sea ActivoFijo
+        fields = '__all__'
+        depth = 1
+
+class DetallePresupuestoWriteSerializer(serializers.ModelSerializer):
+    """Serializer para CREAR detalles de presupuesto. Acepta IDs."""
+    presupuesto = serializers.PrimaryKeyRelatedField(queryset=Presupuesto.objects.all())
+    categoria_activo = serializers.PrimaryKeyRelatedField(queryset=CategoriaActivo.objects.all())
+
+    class Meta:
+        model = DetallePresupuesto
+        fields = ['id', 'presupuesto', 'categoria_activo', 'monto_asignado', 'fecha']
+
+class DetallePresupuestoReadSerializer(serializers.ModelSerializer):
+    """Serializer para LEER detalles de presupuesto. Muestra objetos anidados."""
+    class Meta:
+        model = DetallePresupuesto
+        fields = '__all__'
+        depth = 1
+
+class RevalorizacionActivosWriteSerializer(serializers.ModelSerializer):
+    activo_fijo = serializers.PrimaryKeyRelatedField(queryset=ActivoFijo.objects.all())
+    class Meta:
+        model = RevalorizacionActivos
+        fields = ['id', 'activo_fijo', 'fecha', 'nuevo_valor', 'detalle']
+
+class RevalorizacionActivosReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RevalorizacionActivos 
+        fields = '__all__'
+        depth = 1
 
 # --- Serializers para las demás tablas (CRUD general) ---
 
@@ -182,6 +223,8 @@ class UbicacionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ActivoFijoSerializer(serializers.ModelSerializer):
+    revalorizacionactivos_set = RevalorizacionActivosReadSerializer(many=True, read_only=True)
+    
     class Meta:
         model = ActivoFijo
         fields = '__all__'
@@ -199,9 +242,19 @@ class MovimientosInventarioSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class PresupuestoSerializer(serializers.ModelSerializer):
+    """
+    Serializer para Presupuestos que incluye sus detalles (asignaciones) anidados.
+    """
+    detallepresupuesto_set = DetallePresupuestoReadSerializer(many=True, read_only=True)
+
     class Meta:
         model = Presupuesto
-        fields = '__all__'
+        fields = [
+            'id', 'descripcion', 'fecha_inicio', 'fecha_fin', 
+            'monto_total', 'empresa', 'detallepresupuesto_set'
+        ]
+        # Usamos depth = 1 para que 'empresa' también se muestre como un objeto.
+        depth = 1
 
 class DetallePresupuestoSerializer(serializers.ModelSerializer):
     class Meta:
