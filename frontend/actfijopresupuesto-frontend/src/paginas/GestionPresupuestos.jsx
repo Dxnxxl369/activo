@@ -66,20 +66,31 @@ export default function GestionPresupuestos() {
         }
         setEsModalPrincipalAbierto(true);
     };
-    const handleCerrarModalPrincipal = () => setEsModalPrincipalAbierto(false);
+    //const handleCerrarModalPrincipal = () => setEsModalPrincipalAbierto(false);
+    const handleCerrarModalPrincipal = () => {
+        setEsModalPrincipalAbierto(false);
+        // Añade estas dos líneas para limpiar el estado del formulario:
+        setItemActual(estadoInicialPrincipal); // Resetea los campos del formulario
+        setEsEditando(false);                  // Asegura que la próxima vez no esté en modo edición
+    };
     const handleChangePrincipal = (e) => setItemActual({ ...itemActual, [e.target.name]: e.target.value });
     const handleSubmitPrincipal = async (e) => {
         e.preventDefault();
+        console.log("Enviando datos:", itemActual, "¿Modo edición?", esEditando);
         try {
             if (esEditando) {
                 await actualizarPresupuesto(itemActual.id, itemActual);
             } else {
-                await crearPresupuesto(itemActual);
+                const { id, ...datosParaCrear } = itemActual;
+                await crearPresupuesto(datosParaCrear);
             }
             cargarDatos();
             handleCerrarModalPrincipal();
         } catch (error) {
             console.error("Error al guardar el presupuesto:", error);
+            if (error.response) {
+            console.error("Detalles del error del backend:", error.response.data);
+        }
         }
     };
     const handleEliminarPrincipal = async (id, e) => {

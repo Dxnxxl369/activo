@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
+from rest_framework.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
 
@@ -193,6 +193,19 @@ class PresupuestoViewSet(viewsets.ModelViewSet):
     queryset = Presupuesto.objects.all()
     serializer_class = PresupuestoSerializer
 
+    #def perform_create(self, serializer):
+    #    """
+    #    Asigna automáticamente la empresa del empleado que crea el presupuesto.
+    #    """
+    #    try:
+    #        # 1. Obtiene el usuario que hace la petición (request.user).
+    #        # 2. Busca el perfil de Empleado asociado a ese usuario.
+    #        empleado = Empleado.objects.get(usuario=self.request.user)
+    #        # 3. Guarda el presupuesto asignando la empresa de ese empleado.
+    #        serializer.save(empresa=empleado.empresa)
+    #    except Empleado.DoesNotExist:
+    #        raise ValidationError("El usuario no está vinculado a un empleado y no puede crear presupuestos.")
+
 class DetallePresupuestoViewSet(viewsets.ModelViewSet):
     queryset = DetallePresupuesto.objects.all()
 
@@ -231,20 +244,11 @@ class RevalorizacionActivosViewSet(viewsets.ModelViewSet):
         2. Actualiza el valor_actual del ActivoFijo asociado.
         """
         try:
-            with transaction.atomic():
-                # Primero, guardamos el registro histórico de la revalorización
-                revalorizacion = serializer.save()
-
-                # Obtenemos el activo fijo relacionado
+            with transaction.atomic():            
+                revalorizacion = serializer.save()                
                 activo = revalorizacion.activo_fijo
-
-                # Actualizamos el valor del activo con el nuevo valor del registro de revalorización
-                activo.valor_actual = revalorizacion.nuevo_valor
-                
-                # ¡Esta es la línea clave que guarda el cambio en el ActivoFijo!
-                activo.save()
-
-                # (Opcional) Puedes añadir un print para verificar en la consola de Django
+                activo.valor_actual = revalorizacion.nuevo_valor                
+                activo.save()        
                 print(f"Activo '{activo.nombre}' (ID: {activo.id}) actualizado. Nuevo valor: {activo.valor_actual}")
 
         except Exception as e:

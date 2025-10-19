@@ -243,18 +243,27 @@ class MovimientosInventarioSerializer(serializers.ModelSerializer):
 
 class PresupuestoSerializer(serializers.ModelSerializer):
     """
-    Serializer para Presupuestos que incluye sus detalles (asignaciones) anidados.
+    Serializer que maneja correctamente la creación y lectura de Presupuestos.
     """
+    # Para la LECTURA (GET): Muestra los detalles de las asignaciones.
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
     detallepresupuesto_set = DetallePresupuestoReadSerializer(many=True, read_only=True)
+    
+    # Para la LECTURA (GET): Muestra el nombre de la empresa en lugar de solo su ID.
+    
 
     class Meta:
         model = Presupuesto
         fields = [
-            'id', 'descripcion', 'fecha_inicio', 'fecha_fin', 
-            'monto_total', 'empresa', 'detallepresupuesto_set'
+            'id', 
+            'descripcion', 
+            'fecha_inicio', 
+            'fecha_fin', 
+            'monto_total', 
+            'empresa',  # Para la ESCRITURA (POST): Aceptará el ID (ej: 1, 2) del ComboBox.
+            'empresa_nombre', # Para la LECTURA (GET): Mostrará el nombre (ej: "Mi Empresa").
+            'detallepresupuesto_set'
         ]
-        # Usamos depth = 1 para que 'empresa' también se muestre como un objeto.
-        depth = 1
 
 class DetallePresupuestoSerializer(serializers.ModelSerializer):
     class Meta:
