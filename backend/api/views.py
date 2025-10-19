@@ -1,3 +1,7 @@
+from rest_framework.views import APIView
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Sum
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -272,3 +276,25 @@ class DisposicionActivosViewSet(viewsets.ModelViewSet):
 class ImpuestosViewSet(viewsets.ModelViewSet):
     queryset = Impuestos.objects.all()
     serializer_class = ImpuestosSerializer
+
+class DashboardStatsView(APIView):
+    """
+    Una vista que retorna las estadísticas clave para el dashboard.
+    Se accede a través de /api/dashboard/
+    """
+    def get(self, request, *args, **kwargs):
+        # Calcula las métricas
+        valor_total_activos = ActivoFijo.objects.aggregate(total=Sum('valor_actual'))['total'] or 0
+        presupuesto_total_activo = Presupuesto.objects.filter(fecha_fin__gte=timezone.now()).aggregate(total=Sum('monto_total'))['total'] or 0
+        total_empleados = Empleado.objects.count()
+        proveedores_activos = Proveedor.objects.filter(estado='activo').count()
+        
+        # Prepara la respuesta
+        data = {
+            'valor_total_activos': f"{valor_total_activos:,.2f}",
+            'presupuesto_total': f"{presupuesto_total_activo:,.2f}",
+            'total_empleados': total_empleados,
+            'proveedores_activos': proveedores_activos
+        }
+        
+        return Response(data)

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/activofijo_provider.dart';
 import 'activofijo_edit_screen.dart';
+import '../../widgets/app_drawer.dart';
 
 class ActivoFijoListScreen extends StatefulWidget {
   const ActivoFijoListScreen({super.key});
@@ -26,44 +27,63 @@ class _ActivoFijoListScreenState extends State<ActivoFijoListScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Activos Fijos')),
+      drawer: const AppDrawer(),
       body: provider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: () => provider.fetchActivosFijos(),
               child: ListView.builder(
+                padding: const EdgeInsets.all(12.0),
                 itemCount: provider.activos.length,
                 itemBuilder: (ctx, i) {
                   final activo = provider.activos[i];
                   return Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-                    child: ListTile(
-                      title: Text(activo.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text("Valor: \$${activo.valorActual} - Ubicación: ${activo.ubicacionNombre}"),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.orangeAccent),
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => ActivoFijoEditScreen(activoFijo: activo)),
+                    elevation: 4,
+                    shadowColor: Colors.black.withOpacity(0.15),
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(15),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => ActivoFijoEditScreen(activoFijo: activo)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 28,
+                              backgroundColor: Colors.green.shade100,
+                              child: const Icon(Icons.devices_other_outlined, color: Colors.green, size: 30),
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.redAccent),
-                            onPressed: () async {
-                              try {
-                                await provider.deleteActivoFijo(activo.id);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Activo eliminado'), backgroundColor: Colors.green)
-                                );
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Error al eliminar'), backgroundColor: Colors.red)
-                                );
-                              }
-                            },
-                          ),
-                        ],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    activo.nombre,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    "Valor: \$${activo.valorActual}",
+                                    style: TextStyle(color: Colors.grey[700]),
+                                  ),
+                                  Text(
+                                    "Ubicación: ${activo.ubicacionNombre}",
+                                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                              onPressed: () { /* Lógica de eliminación */ },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );

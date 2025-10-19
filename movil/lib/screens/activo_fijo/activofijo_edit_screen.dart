@@ -31,16 +31,12 @@ class _ActivoFijoEditScreenState extends State<ActivoFijoEditScreen> {
     setState(() => _isLoading = true);
     
     try {
-      await Provider.of<ActivoFijoProvider>(context, listen: false)
-          .updateActivoFijo(_editedActivo);
-      Navigator.of(context).pop();
+      await Provider.of<ActivoFijoProvider>(context, listen: false).updateActivoFijo(_editedActivo);
+      if (mounted) Navigator.of(context).pop();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al guardar'), backgroundColor: Colors.red));
+      // Manejo de error
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -49,41 +45,60 @@ class _ActivoFijoEditScreenState extends State<ActivoFijoEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Activo Fijo'),
-        actions: [IconButton(icon: const Icon(Icons.save), onPressed: _saveForm)],
+        actions: [IconButton(icon: const Icon(Icons.save_outlined), onPressed: _saveForm)],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        initialValue: _editedActivo.nombre,
-                        decoration: const InputDecoration(labelText: 'Nombre del Activo'),
-                        validator: (v) => v!.isEmpty ? 'Campo requerido' : null,
-                        onSaved: (v) => _editedActivo.nombre = v!,
+          : Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      initialValue: _editedActivo.nombre,
+                      decoration: InputDecoration(
+                        labelText: 'Nombre del Activo',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.label_important_outline),
                       ),
-                      TextFormField(
-                        initialValue: _editedActivo.descripcion,
-                        decoration: const InputDecoration(labelText: 'Descripción'),
-                        onSaved: (v) => _editedActivo.descripcion = v!,
+                      validator: (v) => v!.isEmpty ? 'Campo requerido' : null,
+                      onSaved: (v) => _editedActivo.nombre = v!,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      initialValue: _editedActivo.descripcion,
+                      decoration: InputDecoration(
+                        labelText: 'Descripción',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.notes_outlined),
                       ),
-                       TextFormField(
-                        initialValue: _editedActivo.valorActual,
-                        decoration: const InputDecoration(labelText: 'Valor Actual'),
-                        keyboardType: TextInputType.number,
-                        validator: (v) => v!.isEmpty ? 'Campo requerido' : null,
-                        onSaved: (v) => _editedActivo.valorActual = v!,
+                      maxLines: 3,
+                      onSaved: (v) => _editedActivo.descripcion = v!,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      initialValue: _editedActivo.valorActual,
+                      decoration: InputDecoration(
+                        labelText: 'Valor Actual',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.price_change_outlined),
                       ),
-                      const SizedBox(height: 20),
-                      Chip(label: Text('Categoría: ${_editedActivo.categoriaNombre}')),
-                      Chip(label: Text('Ubicación: ${_editedActivo.ubicacionNombre}')),
-                      Chip(label: Text('Estado: ${_editedActivo.estadoNombre}')),
-                    ],
-                  ),
+                      keyboardType: TextInputType.number,
+                      validator: (v) => v!.isEmpty ? 'Campo requerido' : null,
+                      onSaved: (v) => _editedActivo.valorActual = v!,
+                    ),
+                    const SizedBox(height: 24),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: [
+                        Chip(avatar: const Icon(Icons.category_outlined), label: Text('Categoría: ${_editedActivo.categoriaNombre}')),
+                        Chip(avatar: const Icon(Icons.location_on_outlined), label: Text('Ubicación: ${_editedActivo.ubicacionNombre}')),
+                        Chip(avatar: const Icon(Icons.toggle_on_outlined), label: Text('Estado: ${_editedActivo.estadoNombre}')),
+                      ],
+                    )
+                  ],
                 ),
               ),
             ),

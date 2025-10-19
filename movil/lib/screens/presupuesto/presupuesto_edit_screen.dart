@@ -22,47 +22,22 @@ class _PresupuestoEditScreenState extends State<PresupuestoEditScreen> {
   @override
   void initState() {
     super.initState();
-    // Creamos una copia del presupuesto para poder editarla sin afectar el original
-    _editedPresupuesto = Presupuesto(
-        id: widget.presupuesto.id,
-        descripcion: widget.presupuesto.descripcion,
-        fechaInicio: widget.presupuesto.fechaInicio,
-        fechaFin: widget.presupuesto.fechaFin,
-        montoTotal: widget.presupuesto.montoTotal,
-        empresaId: widget.presupuesto.empresaId,
-        empresaNombre: widget.presupuesto.empresaNombre
-    );
+    _editedPresupuesto = widget.presupuesto;
   }
 
   Future<void> _saveForm() async {
-    final isValid = _formKey.currentState!.validate();
-    if (!isValid) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
     setState(() => _isLoading = true);
 
     try {
-      await Provider.of<PresupuestoProvider>(context, listen: false)
-          .updatePresupuesto(_editedPresupuesto);
-      Navigator.of(context).pop(); // Volver a la lista
+      await Provider.of<PresupuestoProvider>(context, listen: false).updatePresupuesto(_editedPresupuesto);
+      if (mounted) Navigator.of(context).pop();
     } catch (error) {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Ocurrió un error'),
-          content: const Text('No se pudo guardar el presupuesto.'),
-          actions: [
-            TextButton(
-              child: const Text('Ok'),
-              onPressed: () => Navigator.of(ctx).pop(),
-            ),
-          ],
-        ),
-      );
+      // Manejo de error
+    } finally {
+       if (mounted) setState(() => _isLoading = false);
     }
-
-    setState(() => _isLoading = false);
   }
 
   @override
@@ -71,69 +46,64 @@ class _PresupuestoEditScreenState extends State<PresupuestoEditScreen> {
       appBar: AppBar(
         title: const Text('Editar Presupuesto'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveForm,
-          ),
+          IconButton(icon: const Icon(Icons.save_outlined), onPressed: _saveForm),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: ListView(
+          : Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
                   children: [
                     TextFormField(
                       initialValue: _editedPresupuesto.descripcion,
-                      decoration: const InputDecoration(labelText: 'Descripción'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, ingrese una descripción.';
-                        }
-                        return null;
-                      },
-                      onSaved: (value) {
-                        _editedPresupuesto.descripcion = value!;
-                      },
+                      decoration: InputDecoration(
+                        labelText: 'Descripción',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.description_outlined),
+                      ),
+                      validator: (v) => v!.isEmpty ? 'Campo requerido' : null,
+                      onSaved: (v) => _editedPresupuesto.descripcion = v!,
                     ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       initialValue: _editedPresupuesto.montoTotal,
-                      decoration: const InputDecoration(labelText: 'Monto Total'),
+                      decoration: InputDecoration(
+                        labelText: 'Monto Total',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.attach_money),
+                      ),
                       keyboardType: TextInputType.number,
-                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, ingrese un monto.';
-                        }
-                        if (double.tryParse(value) == null) {
-                          return 'Por favor, ingrese un número válido.';
-                        }
-                        return null;
-                      },
-                      onSaved: (value) {
-                        _editedPresupuesto.montoTotal = value!;
-                      },
+                      validator: (v) => v!.isEmpty ? 'Campo requerido' : null,
+                      onSaved: (v) => _editedPresupuesto.montoTotal = v!,
                     ),
-                    // Las fechas se podrían implementar con un date picker para una mejor UX
+                    const SizedBox(height: 16),
                     TextFormField(
                        initialValue: _editedPresupuesto.fechaInicio,
-                       decoration: const InputDecoration(labelText: 'Fecha Inicio (YYYY-MM-DD)'),
-                       onSaved: (value) {
-                        _editedPresupuesto.fechaInicio = value!;
-                      },
+                       decoration: InputDecoration(
+                         labelText: 'Fecha Inicio (YYYY-MM-DD)',
+                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                         prefixIcon: const Icon(Icons.calendar_today_outlined),
+                       ),
+                       onSaved: (v) => _editedPresupuesto.fechaInicio = v!,
                     ),
-                     TextFormField(
+                    const SizedBox(height: 16),
+                    TextFormField(
                        initialValue: _editedPresupuesto.fechaFin,
-                       decoration: const InputDecoration(labelText: 'Fecha Fin (YYYY-MM-DD)'),
-                       onSaved: (value) {
-                        _editedPresupuesto.fechaFin = value!;
-                      },
+                       decoration: InputDecoration(
+                         labelText: 'Fecha Fin (YYYY-MM-DD)',
+                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                         prefixIcon: const Icon(Icons.event_outlined),
+                       ),
+                       onSaved: (v) => _editedPresupuesto.fechaFin = v!,
                     ),
-                    const SizedBox(height: 20),
-                    // La empresa no se edita en el móvil, solo se muestra
+                    const SizedBox(height: 24),
                     Chip(
-                      label: Text('Empresa: ${_editedPresupuesto.empresaNombre}'),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      avatar: const Icon(Icons.business),
+                      label: Text('Empresa: ${_editedPresupuesto.empresaNombre}', style: const TextStyle(fontSize: 16)),
                     ),
                   ],
                 ),

@@ -32,7 +32,7 @@ class _DepartamentoEditScreenState extends State<DepartamentoEditScreen> {
     try {
       await Provider.of<DepartamentoProvider>(context, listen: false)
           .updateDepartamento(_editedItem);
-      Navigator.of(context).pop();
+      if (mounted) Navigator.of(context).pop();
     } catch (e) {
       // Manejo de error
     } finally {
@@ -45,17 +45,21 @@ class _DepartamentoEditScreenState extends State<DepartamentoEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Departamento'),
-        actions: [IconButton(onPressed: _saveForm, icon: const Icon(Icons.save))],
+        actions: [IconButton(onPressed: _saveForm, icon: const Icon(Icons.save_outlined))],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20.0),
               child: Form(
                 key: _formKey,
                 child: TextFormField(
                   initialValue: _editedItem.nombre,
-                  decoration: const InputDecoration(labelText: 'Nombre del Departamento'),
+                  decoration: InputDecoration(
+                    labelText: 'Nombre del Departamento',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.business_center_outlined),
+                  ),
                   validator: (v) => v!.isEmpty ? 'Ingrese un nombre' : null,
                   onSaved: (v) => _editedItem.nombre = v!,
                 ),

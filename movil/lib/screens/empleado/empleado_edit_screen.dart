@@ -31,16 +31,12 @@ class _EmpleadoEditScreenState extends State<EmpleadoEditScreen> {
     setState(() => _isLoading = true);
     
     try {
-      await Provider.of<EmpleadoProvider>(context, listen: false)
-          .updateEmpleado(_editedEmpleado);
-      Navigator.of(context).pop();
+      await Provider.of<EmpleadoProvider>(context, listen: false).updateEmpleado(_editedEmpleado);
+      if (mounted) Navigator.of(context).pop();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al guardar empleado'), backgroundColor: Colors.red));
+      // Manejo de error
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -48,39 +44,51 @@ class _EmpleadoEditScreenState extends State<EmpleadoEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Editar ${_editedEmpleado.nombreCompleto}'),
-        actions: [IconButton(icon: const Icon(Icons.save), onPressed: _saveForm)],
+        title: Text('Editar Empleado'),
+        actions: [IconButton(icon: const Icon(Icons.save_outlined), onPressed: _saveForm)],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Nombre: ${_editedEmpleado.nombreCompleto}", style: Theme.of(context).textTheme.titleMedium),
-                      Text("CI: ${_editedEmpleado.ci}"),
-                      const Divider(height: 20),
-                      TextFormField(
-                        initialValue: _editedEmpleado.direccion,
-                        decoration: const InputDecoration(labelText: 'Dirección'),
-                        onSaved: (v) => _editedEmpleado.direccion = v ?? '',
+          : Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_editedEmpleado.nombreCompleto, style: Theme.of(context).textTheme.headlineSmall),
+                    Text("CI: ${_editedEmpleado.ci}", style: Theme.of(context).textTheme.bodyMedium),
+                    const Divider(height: 32, thickness: 1),
+                    TextFormField(
+                      initialValue: _editedEmpleado.direccion,
+                      decoration: InputDecoration(
+                        labelText: 'Dirección',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.home_outlined),
                       ),
-                      TextFormField(
-                        initialValue: _editedEmpleado.telefono,
-                        decoration: const InputDecoration(labelText: 'Teléfono'),
-                        keyboardType: TextInputType.phone,
-                        onSaved: (v) => _editedEmpleado.telefono = v ?? '',
+                      onSaved: (v) => _editedEmpleado.direccion = v ?? '',
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      initialValue: _editedEmpleado.telefono,
+                      decoration: InputDecoration(
+                        labelText: 'Teléfono',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.phone_outlined),
                       ),
-                      const SizedBox(height: 20),
-                      // Los cargos y departamentos no son editables en esta versión simple
-                      Chip(label: Text('Cargo: ${_editedEmpleado.cargoNombre}')),
-                      Chip(label: Text('Departamento: ${_editedEmpleado.departamentoNombre}')),
-                    ],
-                  ),
+                      keyboardType: TextInputType.phone,
+                      onSaved: (v) => _editedEmpleado.telefono = v ?? '',
+                    ),
+                    const SizedBox(height: 24),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: [
+                        Chip(avatar: const Icon(Icons.work_outline), label: Text('Cargo: ${_editedEmpleado.cargoNombre}')),
+                        Chip(avatar: const Icon(Icons.business_outlined), label: Text('Depto: ${_editedEmpleado.departamentoNombre}')),
+                      ],
+                    )
+                  ],
                 ),
               ),
             ),

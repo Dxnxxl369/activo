@@ -2,7 +2,7 @@
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from . import views # Correcta importación relativa de las vistas
+from . import views  # Correcta importación relativa de las vistas
 
 # El router registra todas las vistas de la API
 router = DefaultRouter()
@@ -31,7 +31,10 @@ router.register(r'depreciaciones-activos', views.DepreciacionActivosViewSet, bas
 router.register(r'disposiciones-activos', views.DisposicionActivosViewSet, basename='disposicionactivo')
 router.register(r'impuestos', views.ImpuestosViewSet, basename='impuesto')
 
+
 # urlpatterns solo debe incluir las rutas del router
 urlpatterns = [
     path('', include(router.urls)),
+    path('dashboard/', views.DashboardStatsView.as_view(), name='dashboard-stats'),
+
 ]

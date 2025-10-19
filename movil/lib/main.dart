@@ -15,7 +15,9 @@ import 'providers/categoria_activo_provider.dart';
 import 'providers/ubicacion_provider.dart';
 import 'providers/estado_activo_provider.dart';
 import 'providers/rol_provider.dart';
+import 'providers/dashboard_provider.dart';
 
+import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 
@@ -42,6 +44,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UbicacionProvider()),
         ChangeNotifierProvider(create: (_) => EstadoActivoProvider()),
         ChangeNotifierProvider(create: (_) => RolProvider()),      
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
       ],
       child: MaterialApp(
         title: 'Gestión de Activos',
@@ -63,7 +66,8 @@ class MyApp extends StatelessWidget {
         ),
         home: Consumer<AuthProvider>(
           builder: (context, auth, _) {
-            return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
+            //return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
+            return auth.isAuthenticated ? const DashboardScreen() : const LoginScreen();
           },
         ),
       ),

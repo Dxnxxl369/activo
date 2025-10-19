@@ -31,16 +31,12 @@ class _ProveedorEditScreenState extends State<ProveedorEditScreen> {
     setState(() => _isLoading = true);
     
     try {
-      await Provider.of<ProveedorProvider>(context, listen: false)
-          .updateProveedor(_editedProveedor);
-      Navigator.of(context).pop();
+      await Provider.of<ProveedorProvider>(context, listen: false).updateProveedor(_editedProveedor);
+      if (mounted) Navigator.of(context).pop();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al guardar'), backgroundColor: Colors.red));
+      // Manejo de error
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -49,48 +45,65 @@ class _ProveedorEditScreenState extends State<ProveedorEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Proveedor'),
-        actions: [IconButton(icon: const Icon(Icons.save), onPressed: _saveForm)],
+        actions: [IconButton(icon: const Icon(Icons.save_outlined), onPressed: _saveForm)],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        initialValue: _editedProveedor.nombre,
-                        decoration: const InputDecoration(labelText: 'Nombre del Proveedor'),
-                        validator: (v) => v!.isEmpty ? 'Campo requerido' : null,
-                        onSaved: (v) => _editedProveedor.nombre = v!,
+          : Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      initialValue: _editedProveedor.nombre,
+                      decoration: InputDecoration(
+                        labelText: 'Nombre del Proveedor',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.store_outlined),
                       ),
-                      TextFormField(
-                        initialValue: _editedProveedor.direccion,
-                        decoration: const InputDecoration(labelText: 'Dirección'),
-                        onSaved: (v) => _editedProveedor.direccion = v!,
+                      validator: (v) => v!.isEmpty ? 'Campo requerido' : null,
+                      onSaved: (v) => _editedProveedor.nombre = v!,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      initialValue: _editedProveedor.direccion,
+                      decoration: InputDecoration(
+                        labelText: 'Dirección',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.location_city_outlined),
                       ),
-                      TextFormField(
-                        initialValue: _editedProveedor.telefono,
-                        decoration: const InputDecoration(labelText: 'Teléfono'),
-                        keyboardType: TextInputType.phone,
-                        onSaved: (v) => _editedProveedor.telefono = v!,
+                      onSaved: (v) => _editedProveedor.direccion = v!,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      initialValue: _editedProveedor.telefono,
+                      decoration: InputDecoration(
+                        labelText: 'Teléfono',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.phone_outlined),
                       ),
-                      TextFormField(
-                        initialValue: _editedProveedor.email,
-                        decoration: const InputDecoration(labelText: 'Email'),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (v) {
-                          if (v != null && v.isNotEmpty && !v.contains('@')) {
-                            return 'Email no válido';
-                          }
-                          return null;
-                        },
-                        onSaved: (v) => _editedProveedor.email = v!,
+                      keyboardType: TextInputType.phone,
+                      onSaved: (v) => _editedProveedor.telefono = v!,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      initialValue: _editedProveedor.email,
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
-                    ],
-                  ),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (v) {
+                        if (v != null && v.isNotEmpty && !v.contains('@')) {
+                          return 'Email no válido';
+                        }
+                        return null;
+                      },
+                      onSaved: (v) => _editedProveedor.email = v!,
+                    ),
+                  ],
                 ),
               ),
             ),
