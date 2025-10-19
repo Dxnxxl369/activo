@@ -31,9 +31,7 @@ class _PresupuestoListScreenState extends State<PresupuestoListScreen> {
         actions: <Widget>[
           TextButton(
             child: const Text('Ok'),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
+            onPressed: () => Navigator.of(ctx).pop(),
           )
         ],
       ),
@@ -53,20 +51,37 @@ class _PresupuestoListScreenState extends State<PresupuestoListScreen> {
           : RefreshIndicator(
               onRefresh: () => presupuestoProvider.fetchPresupuestos(),
               child: ListView.builder(
+                padding: const EdgeInsets.all(8.0), // Añadimos padding a la lista
                 itemCount: presupuestoProvider.presupuestos.length,
                 itemBuilder: (ctx, i) {
                   final presupuesto = presupuestoProvider.presupuestos[i];
                   return Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
-                    child: ListTile(
-                      title: Text(presupuesto.descripcion, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text('Monto: \$${presupuesto.montoTotal} - Empresa: ${presupuesto.empresaNombre}'),
-                      trailing: SizedBox(
-                        width: 100,
-                        child: Row(
+                    elevation: 3,
+                    shadowColor: Colors.black.withOpacity(0.1),
+                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.indigo[100],
+                          child: const Icon(Icons.attach_money, color: Colors.indigo),
+                        ),
+                        title: Text(presupuesto.descripcion, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const SizedBox(height: 4),
+                            Text('Monto: \$${presupuesto.montoTotal}'),
+                            Text('Empresa: ${presupuesto.empresaNombre}'),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Botón de Editar con un estilo más definido
                             IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.orange),
+                              icon: const Icon(Icons.edit_outlined, color: Colors.orange),
                               onPressed: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
@@ -75,8 +90,9 @@ class _PresupuestoListScreenState extends State<PresupuestoListScreen> {
                                 );
                               },
                             ),
+                            // Botón de Borrar
                             IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
+                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                               onPressed: () async {
                                 try {
                                   await presupuestoProvider.deletePresupuesto(presupuesto.id);
